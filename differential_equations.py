@@ -20,9 +20,12 @@ def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_i
     for i in range(len(z) - 1):
 
         # Nonlinear step (z-domain update)
-        A1_n = A1 + -1j * gamma1 * A3 * np.conj(A2) * np.exp(1j * k_hat * z[i+1]) * dz
-        A2_n = A2 + -1j * gamma2 * A3 * np.conj(A1) * np.exp(1j * k_hat * z[i+1]) * dz
-        A3_n = A3 + -1j * gamma3 * A1 * A2 * np.exp(-1j * k_hat * z[i+1]) * dz
+        A1_n = A1 + -1j * gamma1 * A3 * np.conj(A2)  * dz
+        A2_n = A2 + -1j * gamma2 * A3 * np.conj(A1)  * dz
+        a3 = 1j * A3 * k_hat
+        A3_n = A3 + (-1j * gamma3 * A1 * A2 + a3 ) * dz
+        #print("a3 = ",a3)
+
         A1 = A1_n
         A2 = A2_n
         A3 = A3_n
@@ -50,32 +53,33 @@ def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_i
 
 # Example parameters
 k1, k2, k3 = 1,2,3
-k_parameter = 100 #100
+k_parameter = 1 #100
 k1 = k1*k_parameter
 k1 = k2*k_parameter
 k1 = k3*k_parameter
 
-D = 80
+D = 8
 D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
 gamma1, gamma2, gamma3 = gamma,gamma,gamma
 
 
 x = np.linspace(-10, 10, 1000)
-z = np.linspace(0, 30, 10000)
+z = np.linspace(0, 25, 1000)
 dz = z[1] - z[0]
 
 # Initial conditions
-theta2 = 20
+theta2 = 1.9
 E1 = 0.6 # 0.2 0.6
 E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 A1_init = E1*np.exp(-x**2/a1**2)
-A2_init = E2*np.exp(-(x - 4)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
+A2_init = E2*np.exp(-(x - 8)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
 A3_init = np.exp(-x**2)*0
 
 k_hat = -1*k1*k2*theta2*theta2/2.0/k3
+print(k_hat)
 
 def plot_A1():
     # Apply split-step Fourier method
