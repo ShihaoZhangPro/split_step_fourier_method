@@ -1,7 +1,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import ipywidgets as widgets
+from IPython.display import display
 
 #hi?
 
@@ -58,19 +59,19 @@ k1 = k1*k_parameter
 k1 = k2*k_parameter
 k1 = k3*k_parameter
 
-D = 8
+D = 10
 D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
-gamma1, gamma2, gamma3 = gamma,gamma,gamma
+gamma1, gamma2, gamma3 = 1e1,1e1,1e1
 
 
-x = np.linspace(-10, 10, 1000)
-z = np.linspace(0, 25, 1000)
+x = np.linspace(-10, 10, 10000)
+z = np.linspace(0, 30, 1000)
 dz = z[1] - z[0]
 
 # Initial conditions
 theta2 = 1.9
-E1 = 0.6 # 0.2 0.6
+E1 = 0.1 # 0.2 0.6
 E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
@@ -104,15 +105,60 @@ def plot_A2():
     
     # Calculate absolute values of A2 and transpose it
     A2_abs = np.abs(A2_results).T
-    
+    print(A2_abs)
     # Plot the absolute value of A2 as a function of x and z
     plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
     plt.xlabel('z')
     plt.ylabel('x')
     plt.colorbar(label='|A2|')
     plt.title('Absolute value of A2 field (rotated 90°)')
-    plt.show()
+    
 plot_A2()
+
+def plot_A2_gamma2():
+    # Define gamma2 values to plot
+    gamma2_list = np.logspace(-2,2,20)
+
+    # Set up subplot grid
+    n_plots = len(gamma2_list)
+    n_cols = 3
+    n_rows = int(np.ceil(n_plots / n_cols))
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=(10, 10))
+
+    # Loop over gamma2 values and plot each one
+    for i, gamma2 in enumerate(gamma2_list):
+        # Apply split-step Fourier method
+        _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+
+        # Calculate absolute values of A2 and transpose it
+        A2_abs = np.abs(A2_results).T
+
+        # Determine subplot index
+        row_idx = i // n_cols
+        col_idx = i % n_cols
+
+        # Plot the absolute value of A2 as a function of x and z
+        axs[row_idx, col_idx].imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
+        axs[row_idx, col_idx].set_xlabel('z')
+        axs[row_idx, col_idx].set_ylabel('x')
+        axs[row_idx, col_idx].set_title(f'gamma2 = {gamma2:.0e}')
+        axs[row_idx, col_idx].set_aspect('equal')
+        axs[row_idx, col_idx].set_xlim([z.min(), z.max()])
+        axs[row_idx, col_idx].set_ylim([x.min(), x.max()])
+
+    # Add colorbar
+    plt.subplots_adjust(right=0.9)
+    cbar_ax = fig.add_axes([0.95, 0.15, 0.02, 0.7])
+    fig.colorbar(axs[0, 0].images[0], cax=cbar_ax, label='|A2|')
+
+    # Add overall title
+    fig.suptitle('Absolute value of A2 field (rotated 90°) for different gamma2 values')
+    plt.show()
+
+
+
+#plot_A2_gamma2()
+
 
 def plot_all():
     # Apply split-step Fourier method
