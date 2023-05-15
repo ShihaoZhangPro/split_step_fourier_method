@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import ipywidgets as widgets
 from IPython.display import display
 
-#hi?
 
 def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz):
     dx = x[1] - x[0]
@@ -82,6 +81,26 @@ A3_init = np.exp(-x**2)*0
 k_hat = -1*k1*k2*theta2*theta2/2.0/k3
 print(k_hat)
 
+
+
+def power():
+    # Apply split-step Fourier method
+    A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    
+    # Calculate absolute values of the fields and transpose them
+    A1_abs = np.square(np.abs(A1_results).T)
+    A2_abs = np.square(np.abs(A2_results).T)
+    A3_abs = np.abs(A3_results).T
+    p1 = sum(A1_abs)
+    p2 = sum(A2_abs)
+    p20 = p2[0]
+    p2 = p2/p20
+    p1 = p1/p20
+    plt.plot(z,p1)
+    plt.show()
+
+power()
+
 def plot_A1():
     # Apply split-step Fourier method
     A1_results, _, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
@@ -94,7 +113,7 @@ def plot_A1():
     plt.xlabel('z')
     plt.ylabel('x')
     plt.colorbar(label='|A1|')
-    plt.title('Absolute value of A1 field (rotated 90°)')
+    plt.title('Absolute value of A1 field')
     plt.show()
 
 #plot_A1()
@@ -111,10 +130,11 @@ def plot_A2():
     plt.xlabel('z')
     plt.ylabel('x')
     plt.colorbar(label='|A2|')
-    plt.title('Absolute value of A2 field (rotated 90°)')
+    plt.title('Absolute value of A2 field')
+    plt.show()
     
-plot_A2()
-
+#plot_A2()
+  
 def plot_A2_gamma2():
     # Define gamma2 values to plot
     gamma2_list = np.logspace(-2,2,20)
@@ -152,7 +172,7 @@ def plot_A2_gamma2():
     fig.colorbar(axs[0, 0].images[0], cax=cbar_ax, label='|A2|')
 
     # Add overall title
-    fig.suptitle('Absolute value of A2 field (rotated 90°) for different gamma2 values')
+    fig.suptitle('Absolute value of A2 field for different gamma2 values')
     plt.show()
 
 
@@ -176,7 +196,7 @@ def plot_all():
     
     plt.xlabel('z')
     plt.ylabel('x')
-    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields (rotated 90°)')
+    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields ')
     
     # Custom legend
     from matplotlib.patches import Patch
