@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import ipywidgets as widgets
+#import ipywidgets as widgets
 from IPython.display import display
 
 
@@ -61,11 +61,11 @@ k1 = k3*k_parameter
 D = 10
 D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
-gamma1, gamma2, gamma3 = 1e1,1e1,1e1
+gamma1, gamma2, gamma3 = 1e1,1e02,1e1
 
 
 x = np.linspace(-10, 10, 10000)
-z = np.linspace(0, 30, 1000)
+z = np.linspace(0, 40, 40000)
 dz = z[1] - z[0]
 
 # Initial conditions
@@ -93,13 +93,15 @@ def power():
     A3_abs = np.abs(A3_results).T
     p1 = sum(A1_abs)
     p2 = sum(A2_abs)
+    p3 = sum(A3_abs)
     p20 = p2[0]
     p2 = p2/p20
     p1 = p1/p20
-    plt.plot(z,p1)
+    p1 = p3/p20
+    plt.plot(z,p3)
     plt.show()
 
-power()
+#power()
 
 def plot_A1():
     # Apply split-step Fourier method
@@ -207,5 +209,5 @@ def plot_all():
     
     plt.show()
 
-#plot_all()
+plot_all()
 
