@@ -51,6 +51,7 @@ def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_i
 
     return np.array(A1_results), np.array(A2_results), np.array(A3_results)
 
+
 # Example parameters
 k1, k2, k3 = 1,2,3
 k_parameter = 1 #100
@@ -58,20 +59,20 @@ k1 = k1*k_parameter
 k1 = k2*k_parameter
 k1 = k3*k_parameter
 
-D = 10
+D = 3
 D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
-gamma1, gamma2, gamma3 = 1e1,1e02,1e1
+gamma1, gamma2, gamma3 = 10,10,10
 
 
-x = np.linspace(-10, 10, 10000)
-z = np.linspace(0, 40, 40000)
+x = np.linspace(-20, 20, 500)
+z = np.linspace( 0,30, 5000)
 dz = z[1] - z[0]
 
 # Initial conditions
-theta2 = 1.9
-E1 = 0.1 # 0.2 0.6
-E2 = 1e-2 #1e-2
+theta2 = 1
+E1 = 0.4 # 0.2 0.6
+E2 = 1e-4 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 A1_init = E1*np.exp(-x**2/a1**2)
@@ -90,7 +91,7 @@ def power():
     # Calculate absolute values of the fields and transpose them
     A1_abs = np.square(np.abs(A1_results).T)
     A2_abs = np.square(np.abs(A2_results).T)
-    A3_abs = np.abs(A3_results).T
+    A3_abs = np.square(np.abs(A3_results).T)
     p1 = sum(A1_abs)
     p2 = sum(A2_abs)
     p3 = sum(A3_abs)
@@ -99,6 +100,7 @@ def power():
     p1 = p1/p20
     p1 = p3/p20
     plt.plot(z,p3)
+    plt.plot(z,p2)
     plt.show()
 
 #power()
@@ -126,7 +128,7 @@ def plot_A2():
     
     # Calculate absolute values of A2 and transpose it
     A2_abs = np.abs(A2_results).T
-    print(A2_abs)
+    print(A2_abs.shape)
     # Plot the absolute value of A2 as a function of x and z
     plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
     plt.xlabel('z')
@@ -211,3 +213,41 @@ def plot_all():
 
 plot_all()
 
+def save_all():
+    # Apply split-step Fourier method
+    A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    
+    # Calculate absolute values of the fields and transpose them
+    A1_abs = np.abs(A1_results).T
+    A2_abs = np.abs(A2_results).T
+    A3_abs = np.abs(A3_results).T
+    
+    np.savetxt("A1.txt",A1_abs)
+    np.savetxt("A2.txt",A2_abs)
+    np.savetxt("A3.txt",A3_abs)
+#save_all()
+
+def reload():
+
+    A1_abs = np.loadtxt("A1.txt")
+    A2_abs = np.loadtxt("A2.txt")
+    A3_abs = np.loadtxt("A3.txt")
+    # Plot the absolute value of A1, A2, and A3 as a function of x and z
+    plt.imshow(A1_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
+    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
+    plt.imshow(A3_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
+    
+    plt.xlabel('z')
+    plt.ylabel('x')
+    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields ')
+    
+    # Custom legend
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(facecolor='blue', alpha=0.5, label='|A1|'),
+                       Patch(facecolor='red', alpha=0.5, label='|A2|'),
+                       Patch(facecolor='green', alpha=0.5, label='|A3|')]
+    plt.legend(handles=legend_elements)
+    
+    plt.show()
+
+#reload()
