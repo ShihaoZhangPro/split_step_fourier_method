@@ -105,12 +105,12 @@ def power():
     p20 = p2[0]
     p2 = p2/p20
     p3 = p3/p20
-    #plt.plot(z,p3)
-    plt.plot(z,p2)
+    plt.plot(z,p3)
+    #plt.plot(z,p2)
     plt.ylim(0, 2)
     plt.show()
 
-#power()
+power()
 
 def plot_A1():
     # Apply split-step Fourier method
@@ -144,7 +144,7 @@ def plot_A2():
     plt.title('Absolute value of A2 field')
     plt.show()
     
-plot_A2()
+#plot_A2()
 
 def plot_diff():
 

@@ -241,8 +241,8 @@ def power():
     p2 = p2/p20
     p1 = p1/p20
     p1 = p3/p20
-    plt.plot(z,p3)
-    #plt.plot(z,p2)
+    #plt.plot(z,p3)
+    plt.plot(z,p2)
     plt.show()
 
 #power()
