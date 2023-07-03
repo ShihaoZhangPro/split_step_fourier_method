@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #import ipywidgets as widgets
 from IPython.display import display
-import h5py
+
 
 
 
@@ -20,50 +20,31 @@ def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_i
     A3_results = [A3]
 
     for i in range(len(z) - 1):
-
-        '''
+        
         # Linear step (Fourier domain)
-        A1_k = np.fft.fft(A1)
-        A2_k = np.fft.fft(A2)
-        
 
-        A1_k *= np.exp(1j  * D1 * k_x**2 * dz/4)
-        A2_k *= np.exp(1j  * D2 * k_x**2 * dz/4)
-
-
-        A1 = np.fft.ifft(A1_k)
-        A2 = np.fft.ifft(A2_k)
-        '''
-        
         FT = np.fft.ifft
         IFT = np.fft.fft
         A1 =  IFT(np.exp(1j  * D1 * k_x**2 * dz*0.5)*FT(A1))
         A2 =  IFT(np.exp(1j  * D1 * k_x**2 * dz*0.5)*FT(A2))
+        #print(A1 - A2)
         
 
-
+        
         # Nonlinear step (z-domain update)   
-        A1_n = A1 *np.exp(-1j * gamma1 * gamma3 / k_hat * A2 * np.conj(A2)  * dz)
-        A2_n = A2 *np.exp(-1j * gamma2 * gamma3 / k_hat * A1 * np.conj(A1)  * dz)
+        A1_n = A1 *np.exp(-1j * gamma1 * gamma3 / k_hat * np.abs(A2)**2  * dz)
+        A2_n = A2 *np.exp(-1j * gamma2 * gamma3 / k_hat * np.abs(A1)**2  * dz)
 
         #print("a3 = ",a3)
 
         A1 = A1_n
         A2 = A2_n
-
-        
-        # Linear step (Fourier domain)
-        A1_k = np.fft.fft(A1)
-        A2_k = np.fft.fft(A2)
-
-
-        A1_k *= np.exp(1j  * D1 * k_x**2 * dz/4)
-        A2_k *= np.exp(1j  * D2 * k_x**2 * dz/4)
-
-
-        A1 = np.fft.ifft(A1_k)
-        A2 = np.fft.ifft(A2_k)
         A3 = gamma3 /k_hat * A1 * A2 * np.exp( 1j * k_hat * z[i]) 
+        #print(A1 - A2)
+        #print("A1 is",A1)
+        #print("A2 is",A2)
+        
+
 
         #add to list
         
@@ -86,18 +67,18 @@ gamma1, gamma2, gamma3 = 10,10,10
 
 
 x = np.linspace(-20 , 20 , 500)
-z = np.linspace(0, 50, 5000)
+z = np.linspace(0, 2000, 5000)
 dz = z[1] - z[0]
 
 # Initial conditions
-theta2 = 0.01
-E1 = 0.4 # 0.2 0.6
-E2 = 1e-4 #1e-2
+theta2 = 2.9
+E1 = 0.6 # 0.2 0.6
+E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 x0 = 8
 A1_init = E1*np.exp(-1*x**2/a1**2)
-#A2_init = E1*np.exp(-1*x**2/a1**2)
+#A2_init = E1*np.exp(-1*(x)**2/a1**2)
 A2_init = E2*np.exp(-1*(x - x0)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
 A3_init = np.exp(-x**2)*0
 
@@ -114,7 +95,7 @@ def power():
     A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
     
     # Calculate absolute values of the fields and transpose them
-    A1_abs = np.square(np.abs(A1_results).T)
+    A1_abs = np.square(np.abs(A1_results).T) 
     A2_abs = np.square(np.abs(A2_results).T)
     A3_abs = np.square(np.abs(A3_results).T)
     p1 = np.sum(A1_abs,axis=0)
@@ -124,8 +105,9 @@ def power():
     p20 = p2[0]
     p2 = p2/p20
     p3 = p3/p20
-    plt.plot(z,p3)
+    #plt.plot(z,p3)
     plt.plot(z,p2)
+    plt.ylim(0, 2)
     plt.show()
 
 #power()
@@ -162,8 +144,28 @@ def plot_A2():
     plt.title('Absolute value of A2 field')
     plt.show()
     
-#plot_A2()
-  
+plot_A2()
+
+def plot_diff():
+
+    A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    
+    # Calculate absolute values of the fields and transpose them
+    A1_abs = np.abs(A1_results).T
+    A2_abs = np.abs(A2_results).T
+    A3_abs = np.abs(A3_results).T
+
+    A2_abs =  A1_abs - A2_abs
+    # Plot the absolute value of A2 as a function of x and z
+    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
+    plt.xlabel('z')
+    plt.ylabel('x')
+    plt.colorbar(label='|A2|')
+    plt.title('Absolute value of A2 field')
+    plt.show()
+
+#plot_diff()
+
 def plot_A2_gamma2():
     # Define gamma2 values to plot
     gamma2_list = np.logspace(-2,2,20)
@@ -209,6 +211,52 @@ def plot_A2_gamma2():
 #plot_A2_gamma2()
 
 
+def plot_A2_theta2():
+    # Define gamma2 values to plot
+    theta2_list = np.linspace(1,10,6)
+
+    # Set up subplot grid
+    n_plots = len(theta2_list)
+    n_cols = 3
+    n_rows = int(np.ceil(n_plots / n_cols))
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=(5, 5))
+
+    # Loop over gamma2 values and plot each one
+    for i, theta2 in enumerate(theta2_list):
+        # Apply split-step Fourier method
+        theta2 = theta2
+        A2_init = E2*np.exp(-1*(x - x0)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
+        _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+
+        # Calculate absolute values of A2 and transpose it
+        A2_abs = np.abs(A2_results).T
+
+        # Determine subplot index
+        row_idx = i // n_cols
+        col_idx = i % n_cols
+
+        # Plot the absolute value of A2 as a function of x and z
+        axs[row_idx, col_idx].imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
+        axs[row_idx, col_idx].set_xlabel('z')
+        axs[row_idx, col_idx].set_ylabel('x')
+        axs[row_idx, col_idx].set_title(f'theta2 = {theta2:.0e}')
+        axs[row_idx, col_idx].set_aspect('equal')
+        axs[row_idx, col_idx].set_xlim([z.min(), z.max()])
+        axs[row_idx, col_idx].set_ylim([x.min(), x.max()])
+
+    # Add colorbar
+    plt.subplots_adjust(right=0.9)
+    cbar_ax = fig.add_axes([0.95, 0.15, 0.02, 0.7])
+    fig.colorbar(axs[0, 0].images[0], cax=cbar_ax, label='|A2|')
+
+    # Add overall title
+    fig.suptitle('Absolute value of A2 field for different gamma2 values')
+    plt.show()
+
+
+
+#plot_A2_theta2()
+
 def plot_all():
     # Apply split-step Fourier method
     A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
@@ -236,7 +284,7 @@ def plot_all():
     
     plt.show()
 
-plot_all()
+#plot_all()
 
 def save_all():
     # Apply split-step Fourier method

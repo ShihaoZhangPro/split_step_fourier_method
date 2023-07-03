@@ -54,25 +54,25 @@ def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_i
 
 # Example parameters
 k1, k2, k3 = 1,2,3
-k_parameter = 1 #100
+k_parameter = 1  #100
 k1 = k1*k_parameter
 k1 = k2*k_parameter
 k1 = k3*k_parameter
 
-D = 3
+D = 10
 D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
-gamma1, gamma2, gamma3 = 10,10,10
+gamma1, gamma2, gamma3 = 10,100,10
 
 
 x = np.linspace(-20, 20, 500)
-z = np.linspace( 0,30, 5000)
+z = np.linspace( 0,30, 10000)
 dz = z[1] - z[0]
 
 # Initial conditions
-theta2 = 1
+theta2 = 1.9
 E1 = 0.4 # 0.2 0.6
-E2 = 1e-4 #1e-2
+E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 A1_init = E1*np.exp(-x**2/a1**2)
@@ -137,7 +137,7 @@ def plot_A2():
     plt.title('Absolute value of A2 field')
     plt.show()
     
-#plot_A2()
+plot_A2()
   
 def plot_A2_gamma2():
     # Define gamma2 values to plot
@@ -211,7 +211,7 @@ def plot_all():
     
     plt.show()
 
-plot_all()
+#plot_all()
 
 def save_all():
     # Apply split-step Fourier method

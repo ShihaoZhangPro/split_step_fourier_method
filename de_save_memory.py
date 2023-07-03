@@ -52,8 +52,8 @@ D1, D2, D3 = 1/k1/D, 1/k2/D, 1/k3/D
 gamma = 10
 gamma1, gamma2, gamma3 = 1e1,1e02,1e1
 
-x = np.linspace(-20, 20, 5000)
-z = np.linspace(0, 30, 70000)
+x = np.linspace(-20, 20, 500)
+z = np.linspace(0, 30, 10000)
 dz = z[1] - z[0]
 dx = x[1] - x[0]
 k_x = 2 * np.pi * np.fft.fftfreq(len(x), d=dx)
@@ -105,7 +105,7 @@ def save_all():
     print(index) 
 
    
-#save_all()
+save_all()
 
 def load():
 
