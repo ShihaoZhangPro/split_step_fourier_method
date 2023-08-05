@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
-import h5py
+
 
 
 def ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz):
@@ -51,6 +51,9 @@ gamma1, gamma2, gamma3 = 10,10,10
 x = np.linspace(-20, 20, 1000)
 z = np.linspace( 0,100, 30000)
 dz = z[1] - z[0]
+dx = x[1] - x[0]
+k_x = 2 * np.pi * np.fft.fftfreq(len(x), d=dx)
+
 
 # Initial conditions
 theta2 = 2
@@ -58,10 +61,7 @@ E1 = 0.4 # 0.2 0.6
 E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
-x0 = 8
-A1_init = E1*np.exp(-x**2/a1**2)
-A2_init = E2*np.exp(-(x - x0)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
-A3_init = np.exp(-x**2)*0
+
 z_size = 1000
 k_hat = -1*k1*k2*theta2*theta2/2.0/k3
 print(k_hat)
@@ -84,49 +84,53 @@ def save_all():
     index = -1
 
      
-    with h5py.File('A1.h5', 'w') as hf1,h5py.File('A2.h5', 'w') as hf2,h5py.File('A3.h5', 'w') as hf3:
-        for i in range(1,len(z)):
-            A1, A2, A3 = ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz)
-            #print("this is the shape and length of A1",A1.shape,A1.size)
-            if i % z_size == 1:
-                index += 1
-                print("this is the length of A1",len(A1_results))
-                hf1.create_dataset(f'A1_0.6_{index}', data=A1_results)
-                hf2.create_dataset(f'A2_0.6_{index}', data=A2_results)
-                hf3.create_dataset(f'A3_0.6_{index}', data=A3_results)
-                A1_results = [A1_init]
-                A2_results = [A2_init]
-                A3_results = [A3_init]
-            A1_results.append(A1.copy())
-            A2_results.append(A2.copy())
-            A3_results.append(A3.copy())
-            A1_init, A2_init, A3_init = A1, A2, A3
-    print(index) 
+    
+    for i in range(1,len(z)):
+        A1, A2, A3 = ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz)
+        
+        if i % z_size == 1:
+            index += 1
+            results = {
+                "z"  : z,
+                "A1" : np.array(A1_results),
+                "A2" : np.array(A2_results),
+                "A3" : np.array(A3_results)
+            }
+            f_name = f'my_results_{index}'
+            np.savez_compressed(f_name, **results)
+            
+            A1_results = [A1_init]
+            A2_results = [A2_init]
+            A3_results = [A3_init]
+        A1_results.append(A1.copy())
+        A2_results.append(A2.copy())
+        A3_results.append(A3.copy())
+        A1_init, A2_init, A3_init = A1, A2, A3
+    print(index)
+
 
    
-save_all()
+#save_all()
 
 def load():
+    def fetch_data(f_name):
+        dat = np.load(f_name)
+        return dat['z'], dat['A1'],dat['A2'],dat['A3']
+    
 
-    index = 6
+    index = 29
 
 
+    f_name = 'my_results_0.npz'
+    z,A1_results,A2_results,A3_results   = fetch_data(f_name)
+    for i in range(1, index):
+        f_name = f'my_results_{i}.npz'
+        z,A1_array,A2_array,A3_array   = fetch_data(f_name)
+        A1_results = np.concatenate((A1_results, A1_array), axis=0)
+        A2_results = np.concatenate((A2_results, A2_array), axis=0)
+        A3_results = np.concatenate((A3_results, A3_array), axis=0)
 
-    with h5py.File('A1.h5', 'r') as hf1:
-        A1_results = hf1['A1_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf1[f'A1_0.6_{i}'][:] 
-            A1_results = np.concatenate((A1_results, array), axis=0)
-    with h5py.File('A2.h5', 'r') as hf2:
-        A2_results = hf2['A2_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf2[f'A2_0.6_{i}'][:] 
-            A2_results = np.concatenate((A2_results, array), axis=0)
-    with h5py.File('A3.h5', 'r') as hf3:
-        A3_results = hf3['A3_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf3[f'A3_0.6_{i}'][:] 
-            A3_results = np.concatenate((A3_results, array), axis=0)
+
 
 
     A1_abs = np.abs(A1_results).T
