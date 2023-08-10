@@ -1,10 +1,12 @@
 
 import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
 
-
+directory = 'C:\\Users\\DevlandZ\\Desktop\\Study\\master thesis\\split_step_fourier_method\\data'
+os.chdir(directory)
 
 def ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz):
    
@@ -48,8 +50,8 @@ gamma = 10
 gamma1, gamma2, gamma3 = 10,10,10
 
 
-x = np.linspace(-20, 20, 1000)
-z = np.linspace( 0,100, 30000)
+x = np.linspace(-10, 10, 1000)
+z = np.linspace( 0,50, 50000)
 dz = z[1] - z[0]
 dx = x[1] - x[0]
 k_x = 2 * np.pi * np.fft.fftfreq(len(x), d=dx)
@@ -62,7 +64,7 @@ E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 
-z_size = 1000
+z_size = 5000
 k_hat = -1*k1*k2*theta2*theta2/2.0/k3
 print(k_hat)
 
@@ -70,6 +72,14 @@ print(k_hat)
 
 
 def save_all():
+    theta2 = 2
+    E1 = 0.4 # 0.2 0.6
+    E2 = 1e-2 #1e-2
+    a1 = 3 #3
+    a2 = 1 #1
+
+
+
     x0 = 8
     A1_init = E1*np.exp(-x**2/a1**2)
     A2_init = E2*np.exp(-(x - x0)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
@@ -96,7 +106,7 @@ def save_all():
                 "A2" : np.array(A2_results),
                 "A3" : np.array(A3_results)
             }
-            f_name = f'my_results_{index}'
+            f_name = f'theta2={theta2}_E1={E1}_{index}'
             np.savez_compressed(f_name, **results)
             
             A1_results = [A1_init]
@@ -112,19 +122,19 @@ def save_all():
    
 #save_all()
 
-def load():
+def load(theta2 = 2,E1 = 0.4):
     def fetch_data(f_name):
         dat = np.load(f_name)
         return dat['z'], dat['A1'],dat['A2'],dat['A3']
     
 
-    index = 29
+    index = 9
 
 
-    f_name = 'my_results_0.npz'
+    f_name = f'theta2={theta2}_E1={E1}_{0}.npz'
     z,A1_results,A2_results,A3_results   = fetch_data(f_name)
     for i in range(1, index):
-        f_name = f'my_results_{i}.npz'
+        f_name = f'theta2={theta2}_E1={E1}_{i}.npz'
         z,A1_array,A2_array,A3_array   = fetch_data(f_name)
         A1_results = np.concatenate((A1_results, A1_array), axis=0)
         A2_results = np.concatenate((A2_results, A2_array), axis=0)
@@ -155,39 +165,23 @@ def load():
     
     plt.show()
 
+    return A1_abs,A2_abs,A3_abs
+
 load()
 
+def reflection():
+    # Apply split-step Fourier method
+    _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
 
-def power():
-    index = 6
-    with h5py.File('A1.h5', 'r') as hf1:
-        A1_results = hf1['A1_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf1[f'A1_0.6_{i}'][:] 
-            A1_results = np.concatenate((A1_results, array), axis=0)
-    with h5py.File('A2.h5', 'r') as hf2:
-        A2_results = hf2['A2_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf2[f'A2_0.6_{i}'][:] 
-            A2_results = np.concatenate((A2_results, array), axis=0)
-    with h5py.File('A3.h5', 'r') as hf3:
-        A3_results = hf3['A3_0.6_0'][:] 
-        for i in range(1,index): 
-            array = hf3[f'A3_0.6_{i}'][:] 
-            A3_results = np.concatenate((A3_results, array), axis=0)
-    
-    # Calculate absolute values of the fields and transpose them
-    A1_abs = np.square(np.abs(A1_results).T)
-    A2_abs = np.square(np.abs(A2_results).T)
-    A3_abs = np.square(np.abs(A3_results).T)
-    p1 = sum(A1_abs)
-    p2 = sum(A2_abs)
-    p3 = sum(A3_abs)
-    p20 = p2[0]
-    p2 = p2/p20
-    p1 = p1/p20
-    p1 = p3/p20
-    plt.plot(z,p3)
-    plt.show()
+    # Calculate absolute values of A2 and transpose it
+    A2_abs = np.abs(A2_results).T
+    print(A2_abs.shape)
+    # for array shape of (1000,50000)
+    total_power = np.sum(np.square(A2_abs[649:1000, 4999:10000]))
+    reflect_power = np.sum(np.square(A2_abs[649:1000, 31999:37000]))
+    R = reflect_power/total_power
+    print("reflection is ",R)
 
-#power()
+reflection()
+
+
