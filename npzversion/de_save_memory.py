@@ -5,8 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
 
-directory = 'C:\\Users\\DevlandZ\\Desktop\\Study\\master thesis\\split_step_fourier_method\\data'
-os.chdir(directory)
+# save the data to the data file
+current_directory = os.path.dirname(os.path.abspath(__file__))
+main_directory = os.path.join(current_directory, '..')
+data_directory = os.path.join(main_directory, 'data')
+os.chdir(data_directory)
 
 def ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz):
    
@@ -64,16 +67,14 @@ E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
 
-z_size = 5000
+z_size = 10000
 k_hat = -1*k1*k2*theta2*theta2/2.0/k3
 print(k_hat)
 
 
 
 
-def save_all():
-    theta2 = 2
-    E1 = 0.4 # 0.2 0.6
+def save_data(theta2 = 2,E1 = 0.2):
     E2 = 1e-2 #1e-2
     a1 = 3 #3
     a2 = 1 #1
@@ -95,10 +96,12 @@ def save_all():
 
      
     
-    for i in range(1,len(z)):
-        A1, A2, A3 = ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz)
+    for i in range(0,len(z)+1):
         
-        if i % z_size == 1:
+        
+        if i % z_size == 0:
+            print(len(A1_results))
+            #print(i)
             index += 1
             results = {
                 "z"  : z,
@@ -106,12 +109,13 @@ def save_all():
                 "A2" : np.array(A2_results),
                 "A3" : np.array(A3_results)
             }
-            f_name = f'theta2={theta2}_E1={E1}_{index}'
+            f_name = f'theta2={theta2}_E1={E1}_{index}.npz'
             np.savez_compressed(f_name, **results)
             
-            A1_results = [A1_init]
-            A2_results = [A2_init]
-            A3_results = [A3_init]
+            A1_results = []
+            A2_results = []
+            A3_results = []
+        A1, A2, A3 = ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz)
         A1_results.append(A1.copy())
         A2_results.append(A2.copy())
         A3_results.append(A3.copy())
@@ -120,22 +124,22 @@ def save_all():
 
 
    
-#save_all()
+#save_data()
 
-def load(theta2 = 2,E1 = 0.4):
+def load(theta2 = 2,E1 = 0.4,index = 5):
     def fetch_data(f_name):
         dat = np.load(f_name)
         return dat['z'], dat['A1'],dat['A2'],dat['A3']
     
 
-    index = 9
 
 
-    f_name = f'theta2={theta2}_E1={E1}_{0}.npz'
+    f_name = f'theta2={theta2}_E1={E1}_{1}.npz'
     z,A1_results,A2_results,A3_results   = fetch_data(f_name)
-    for i in range(1, index):
+    for i in range(2, index+1):
         f_name = f'theta2={theta2}_E1={E1}_{i}.npz'
         z,A1_array,A2_array,A3_array   = fetch_data(f_name)
+        #print(A1_results.shape)
         A1_results = np.concatenate((A1_results, A1_array), axis=0)
         A2_results = np.concatenate((A2_results, A2_array), axis=0)
         A3_results = np.concatenate((A3_results, A3_array), axis=0)
@@ -146,7 +150,18 @@ def load(theta2 = 2,E1 = 0.4):
     A1_abs = np.abs(A1_results).T
     A2_abs = np.abs(A2_results).T
     A3_abs = np.abs(A3_results).T
+
+    print(A1_abs.shape)
     
+
+
+    return A1_abs,A2_abs,A3_abs
+
+#load()
+
+def plot_all():
+    
+    A1_abs,A2_abs,A3_abs = load()
     # Plot the absolute value of A1, A2, and A3 as a function of x and z
     plt.imshow(A1_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
     plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
@@ -165,23 +180,114 @@ def load(theta2 = 2,E1 = 0.4):
     
     plt.show()
 
-    return A1_abs,A2_abs,A3_abs
+#plot_all()
 
-load()
+def plot_A2():
+    A1_abs,A2_abs,A3_abs = load()
+    # Plot the absolute value of A2 as a function of x and z
+    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
+    plt.xlabel('z')
+    plt.ylabel('x')
+    plt.colorbar(label='|A2|')
+    plt.title('Absolute value of A2 field')
+    plt.show()
 
-def reflection():
+#plot_A2()
+
+def power():
+    A1_abs,A2_abs,A3_abs = load()
+
+    p1 = sum(A1_abs)
+    p2 = sum(A2_abs)
+    p3 = sum(A3_abs)
+    p20 = p2[0]
+    p2 = p2/p20
+    p1 = p1/p20
+    p1 = p3/p20
+    #plt.plot(z,p3)
+    plt.plot(z,p2)
+    plt.show()
+
+#power()
+
+def impulse():
+    A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    diff = np.diff(A1_results, axis=1)
+    product = np.imag(np.conjugate(A1_results[:,:-1])* diff)
+    I1 = product.sum(axis=1)
+
+    diff = np.diff(A2_results, axis=1)
+    product = np.imag(np.conjugate(A2_results[:,:-1])* diff)
+    I2 = product.sum(axis=1)
+
+    diff = np.diff(A3_results, axis=1)
+    product = np.imag(np.conjugate(A3_results[:,:-1])* diff)
+    I3 = product.sum(axis=1)
+
+    I_sum = I1 + I2 + I3
+
+    I1 = I1 / I_sum[0]
+    I2 = I2 / I_sum[0]
+    I3 = I3 / I_sum[0]
+    I_sum = I_sum  / I_sum[0]
+
+
+
+    plt.plot(z,I1,label='I1')
+    plt.plot(z,I2,label='I2')
+    plt.plot(z,I3,label='I3')
+    plt.plot(z,I_sum,label='sum')
+    plt.legend()
+    plt.show()
+
+#impulse()
+
+def reflection(theta2 = 2,E1 = 0.2):
     # Apply split-step Fourier method
-    _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    A1_abs,A2_abs,A3_abs = load(theta2 = theta2,E1 = E1,index = 5)
 
-    # Calculate absolute values of A2 and transpose it
-    A2_abs = np.abs(A2_results).T
-    print(A2_abs.shape)
+
+
     # for array shape of (1000,50000)
     total_power = np.sum(np.square(A2_abs[649:1000, 4999:10000]))
     reflect_power = np.sum(np.square(A2_abs[649:1000, 31999:37000]))
     R = reflect_power/total_power
     print("reflection is ",R)
+    return R
 
-reflection()
+#reflection()
+
+def reflection_alldata_get():
+    theta2_list = np.linspace(1.5, 2.5, 8)
+
+    for  theta2_value in theta2_list :
+        save_data(theta2 =  theta2_value, E1 =  0.4)
+    for  theta2_value in theta2_list :
+        save_data(theta2 =  theta2_value, E1 =  0.6)
+
+#reflection_alldata_get()
+
+def reflection_alldata_analyze():
+    theta2_list = np.linspace(1.5, 2.5, 8)
+
+    R1 =  []
+    R2 =  []
+    for  theta2_value in theta2_list :
+        R1.append(reflection(theta2 =  theta2_value, E1 =  0.4))
+    for  theta2_value in theta2_list :
+        R2.append(reflection(theta2 =  theta2_value, E1 =  0.6))
+    plt.plot(theta2_list,R1,label='E1 = 0.4')
+    plt.plot(theta2_list,R2,label='E1 = 0.6')
+    plt.legend()
+    plt.show()
+
+reflection_alldata_analyze()
+
+
+
+
+
+
+
 
 

@@ -407,4 +407,20 @@ def F_theta2():
     plt.legend()
     plt.show()
 
-F_theta2()
+#F_theta2()
+
+def reflection():
+    # Apply split-step Fourier method
+    
+    _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
+    
+    # Calculate absolute values of A2 and transpose it
+    A2_abs = np.abs(A2_results).T
+    print(A2_abs.shape)
+    # for array shape of (1000,50000)
+    total_power = np.sum(np.square(A2_abs[649:1000, 4999:10000]))
+    reflect_power = np.sum(np.square(A2_abs[649:1000, 31999:37000]))
+    R = reflect_power/total_power
+    print("reflection is ",R)
+
+reflection()
