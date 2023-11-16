@@ -126,7 +126,7 @@ def save_data(theta2 = 2,E1 = 0.2):
 
 
    
-save_data(theta2 = 2,E1 = 0.1)
+#save_data(theta2 = 2,E1 = 0.1)
 
 def load(theta2 = 2,E1 = 0.4,index = 5):
     def fetch_data(f_name):
@@ -373,7 +373,7 @@ def plot_center_inone(theta2 = 2,E1 = 0.4):
     ax3.axhline(y=0, color='black', linewidth=2,linestyle='--')
 
     # Create the mask
-    mask = (z > 15) & (z < 38)
+    mask = (z > 21) & (z < 100)
 
     # Apply the mask
     z_masked = np.array(z)[mask]
@@ -396,7 +396,7 @@ def plot_center_inone(theta2 = 2,E1 = 0.4):
 
     plt.show()
 
-#plot_center_inone(theta2 = 2,E1 = 0.1)
+plot_center_inone(theta2 = 2,E1 = 0.1)
 def plot_A2():
     A1_abs,A2_abs,A3_abs = load()
     # Plot the absolute value of A2 as a function of x and z

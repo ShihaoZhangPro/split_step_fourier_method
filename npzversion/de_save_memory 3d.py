@@ -8,7 +8,7 @@ import matplotlib.gridspec as gridspec
 
 # save the data to the data file
 current_directory = os.path.dirname(os.path.abspath(__file__))
-main_directory = os.path.join(current_directory, '..')
+main_directory = os.path.join(current_directory, '..\..')
 data_directory = os.path.join(main_directory, 'data')
 os.chdir(data_directory)
 
@@ -58,7 +58,7 @@ gamma1, gamma2, gamma3 = 10,10,10
 
 x = np.linspace(-20, 20, 512)
 y = x
-z = np.linspace( 0,50, 15000)
+z = np.linspace( 0,35, 15000)
 dz = z[1] - z[0]
 dx = x[1] - x[0]
 dy = dx
@@ -136,9 +136,9 @@ def save_data(theta2 = 2,E1 = 0.2, a1 = 4,a2 = 1 ):
 
 
    
-#save_data(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1)
-#save_data(theta2 = 2,E1 = 0.5, a1 = 2,a2 = 2)
-#save_data(theta2 = 2,E1 = 0.5, a1 = 1,a2 = 4)
+save_data(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1)
+save_data(theta2 = 2,E1 = 0.5, a1 = 2,a2 = 2)
+save_data(theta2 = 2,E1 = 0.5, a1 = 1,a2 = 4)
 
 
 
@@ -366,40 +366,63 @@ def plot_all_extract(theta2 = 2,E1 = 0.2, a1 = 4,a2 = 1):
     plt.show()
 
 
-plot_all_extract(theta2 = 2,E1 = 0.5, a1 = 1,a2 = 4)
+#plot_all_extract(theta2 = 2,E1 = 0.5, a1 = 1,a2 = 4)
 
-def plot_xy(theta2 = 2,E1 = 0.2, a1 = 4,a2 = 1,index = 5):
+def plot_xy(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1,index = 5,slice_index = 100,name = ""):
 
     def fetch_data(f_name):
         dat = np.load(f_name)
         return dat['z'], dat['A1'],dat['A2'],dat['A3']
     
-    slice_index = 300
     location = slice(slice_index, slice_index+1)
     f_name = f'3D_theta2={theta2}_E1={E1}_a1 ={a1}_a2 ={a2}_{index}.npz'
     z,A1_abs,A2_abs,A3_abs   = fetch_data(f_name)
     A1_slice = A1_abs[location, :, :].squeeze(axis=0)
     A2_slice = A2_abs[location, :, :].squeeze(axis=0)
     A3_slice = A3_abs[location, :, :].squeeze(axis=0)
+
+
+    fig, ax = plt.subplots(figsize=(5, 5))
     # Plot the absolute value of A1, A2, and A3 as a function of x and z
-    plt.imshow(A1_slice, extent=[y.min(), y.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
-    plt.imshow(A2_slice, extent=[y.min(), y.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
-    #plt.imshow(A3_slice, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
+    ax.imshow(A1_slice, extent=[y.min(), y.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
+    ax.imshow(A2_slice, extent=[y.min(), y.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
+
     
-    plt.xlabel('y')
-    plt.ylabel('x')
-    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields ')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_title('Absolute values of A1, A2')
     
     # Custom legend
     from matplotlib.patches import Patch
     legend_elements = [Patch(facecolor='blue', alpha=0.5, label='|A1|'),
                        Patch(facecolor='red', alpha=0.5, label='|A2|'),
                        ]
-    plt.legend(handles=legend_elements)
+    ax.legend(handles=legend_elements)
     
-    plt.show()
+    fig.savefig(name)
+    #plt.show()
+    plt.close()
 
-#plot_xy(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1,index = 1)
+
+#plot_xy(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1,index = 5,slice_index = 100)
+
+def save_frames(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1,index_number = 30,slice_number = 500):
+
+    frame_index = 0
+    for i in range(1,index_number):
+        for j in np.linspace(start=0, stop=slice_number-1, num=5, dtype=int):
+
+            plot_xy(theta2 = theta2,E1 = E1, a1 = a1,a2 =a2 ,index = i,slice_index = j,name = f"a1={a1}_a2={a2}_{frame_index:03d}.png")
+            frame_index += 1 
+
+    #ffmpeg -framerate 24 -i a1 =4_a2 =1_%03d.png -c:v libx264 -pix_fmt yuv420p out.mp4
+
+
+
+save_frames(theta2 = 2,E1 = 0.5, a1 = 4,a2 = 1,index_number = 30,slice_number = 500)
+save_frames(theta2 = 2,E1 = 0.5, a1 = 2,a2 = 2,index_number = 30,slice_number = 500)
+save_frames(theta2 = 2,E1 = 0.5, a1 = 1,a2 = 4,index_number = 30,slice_number = 500)
+
 
 
 
