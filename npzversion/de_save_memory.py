@@ -4,12 +4,14 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
+import matplotlib.gridspec as gridspec
 
 # save the data to the data file
 current_directory = os.path.dirname(os.path.abspath(__file__))
-main_directory = os.path.join(current_directory, '..')
+main_directory = os.path.join(current_directory, '..\..')
 data_directory = os.path.join(main_directory, 'data')
 os.chdir(data_directory)
+print(data_directory)
 
 def ssfm_once(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, k_x, dz):
    
@@ -53,8 +55,8 @@ gamma = 10
 gamma1, gamma2, gamma3 = 10,10,10
 
 
-x = np.linspace(-10, 10, 1000)
-z = np.linspace( 0,50, 50000)
+x = np.linspace(-20, 20, 1024)
+z = np.linspace( 0,70, 50000)
 dz = z[1] - z[0]
 dx = x[1] - x[0]
 k_x = 2 * np.pi * np.fft.fftfreq(len(x), d=dx)
@@ -124,7 +126,7 @@ def save_data(theta2 = 2,E1 = 0.2):
 
 
    
-#save_data()
+save_data(theta2 = 2,E1 = 0.1)
 
 def load(theta2 = 2,E1 = 0.4,index = 5):
     def fetch_data(f_name):
@@ -161,27 +163,240 @@ def load(theta2 = 2,E1 = 0.4,index = 5):
 
 def plot_all():
     
-    A1_abs,A2_abs,A3_abs = load()
-    # Plot the absolute value of A1, A2, and A3 as a function of x and z
-    plt.imshow(A1_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
-    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
-    plt.imshow(A3_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
-    
-    plt.xlabel('z')
-    plt.ylabel('x')
-    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields ')
-    
-    # Custom legend
-    from matplotlib.patches import Patch
-    legend_elements = [Patch(facecolor='blue', alpha=0.5, label='|A1|'),
-                       Patch(facecolor='red', alpha=0.5, label='|A2|'),
-                       Patch(facecolor='green', alpha=0.5, label='|A3|')]
-    plt.legend(handles=legend_elements)
-    
+    A1_abs,A2_abs,A3_abs = load(theta2 = 2,E1 = 0.2)
+
+
+
+    # Display A1
+    fig1, ax1 = plt.subplots()
+    cax1 = ax1.imshow(A1_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
+    ax1.set_ylabel("Y-Axis Label")
+    ax1.set_xticks([])  # Hide x-axis labels and ticks for A1
+    plt.colorbar(cax1)
+
+
+    # Display A2
+    fig2, ax2 = plt.subplots()
+    cax2 = ax2.imshow(A2_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
+    ax2.set_ylabel("Y-Axis Label")
+    ax2.set_xticks([])  # Hide x-axis labels and ticks for A2
+    plt.colorbar(cax2)
+
+
+    # Display A3
+    fig3, ax3 = plt.subplots()
+    cax3 = ax3.imshow(A3_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
+    ax3.set_ylabel("Y-Axis Label")
+    ax3.set_xlabel("X-Axis Label")  # Show x-axis labels and ticks only for A3
+    plt.colorbar(cax3)
+
     plt.show()
+
 
 #plot_all()
 
+def get_center(A):
+
+
+    squared_array = A ** 2
+
+    # Compute the weighted version of the squared array for columns
+    weighted_array = np.multiply(squared_array, x.reshape(-1,1))
+
+    # Compute the total weight for each column
+    total_weight_per_column = np.sum(weighted_array, axis=0)
+
+    # Compute the total intensity for each column
+    total_intensity_per_column = np.sum(squared_array, axis=0)
+
+    # Compute the weighted center position for each column
+    center_positions_columns = total_weight_per_column / total_intensity_per_column
+
+    return(center_positions_columns)
+
+#get_center()
+
+def plot_center():
+    
+    A1_abs,A2_abs,A3_abs = load(theta2 = 2,E1 = 0.1)
+
+    A1_center =get_center(A1_abs) 
+    A2_center =get_center(A2_abs)
+    A3_center =get_center(A3_abs)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(10, 9))  # 3 rows, 1 column
+    # Display A1
+    fig1, ax1 = plt.subplots(figsize=(10, 3))
+    cax1 = ax1.imshow(A1_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
+    ax1.axhline(y=0, color='black', linewidth=2,linestyle='--')
+    ax1.plot(z,A1_center, color='red', linewidth=2,label='center position')
+    ax1.legend(prop={'size': 16},loc='lower right')
+    ax1.set_ylabel("x",fontsize=20)
+    ax1.set_xticklabels([])  # Hide x-axis labels and ticks for A1
+    plt.colorbar(cax1)
+
+
+    # Display A2
+    fig2, ax2 = plt.subplots(figsize=(10, 3))
+    cax2 = ax2.imshow(A2_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Oranges', alpha=0.5)
+    ax2.axhline(y=0, color='black', linewidth=2,linestyle='--')
+    ax2.plot(z,A2_center, color='red', linewidth=2,label='center position')
+    ax2.legend(prop={'size': 16},loc='lower right')
+    ax2.set_ylabel("x",fontsize=20)
+    ax2.set_xticklabels([])  # Hide x-axis labels and ticks for A2
+    plt.colorbar(cax2)
+
+
+    # Display A3
+    fig3, ax3 = plt.subplots(figsize=(10, 3))
+    cax3 = ax3.imshow(A3_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
+    ax3.axhline(y=0, color='black', linewidth=2,linestyle='--')
+
+    # Create the mask
+    mask = A3_center < 3
+
+    # Apply the mask
+    z_masked = np.array(z)[mask]
+    A3_center_masked = A3_center[mask]
+
+    # Plot the masked values
+    ax3.plot(z_masked, A3_center_masked, color='red', linewidth=2, label='center position')
+
+
+    ax3.legend(prop={'size': 16},loc='lower right')
+    ax3.set_ylabel("x",fontsize=20)
+    ax3.set_xlabel("z",fontsize=20)  # Show x-axis labels and ticks only for A3
+    plt.colorbar(cax3)
+
+
+    plt.tight_layout()
+    plt.show()
+
+
+#plot_center()
+
+def plot_center_inone(theta2 = 2,E1 = 0.4):
+
+    A1_abs,A2_abs,A3_abs = load(theta2 = theta2,E1 = E1)
+
+    A1_center =get_center(A1_abs) 
+    A2_center =get_center(A2_abs)
+    A3_center =get_center(A3_abs)
+
+    fig = plt.figure(figsize=(15, 9))
+
+    gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0.05)
+
+    def add_colorbar(ax, cax_data):
+        # Define custom position and size for colorbar
+        left, bottom, width, height = ax.get_position().bounds
+        cax = fig.add_axes([left + width + 0.003, bottom, 0.008, height / 2])
+        fig.colorbar(cax_data, cax=cax)
+        cbar = fig.colorbar(cax_data, cax=cax)
+        cbar.ax.tick_params(labelsize=15)
+
+    def add_title(ax, title_text):
+        # Get the axis position and dimensions
+        left, bottom, width, height = ax.get_position().bounds
+        # Place title text at the right top corner of the axis
+        ax.text(left + width + 0.04, bottom + height, title_text, 
+                ha='right', va='top', transform=fig.transFigure, fontsize=20)
+    
+    def hide_extreme_ytick_labels(ax):
+        yticks = ax.get_yticklabels()
+        if yticks:
+            yticks[0].set_visible(False)  # Hide smallest label
+            yticks[-1].set_visible(False)  # Hide largest label
+
+    def adjust_axis_properties(ax):
+        # Adjust spines
+        for spine in ax.spines.values():
+            spine.set_linewidth(3)
+        
+        # Adjust tick widths
+        ax.xaxis.set_tick_params(width=3)
+        ax.yaxis.set_tick_params(width=3)
+
+
+    def add_index(ax, text="(a)"):
+        # Get the position of the axis
+        left, bottom, width, height = ax.get_position().bounds
+        # Add text to the top-left corner of the ax, adjusting position as needed
+        ax.text(left, bottom + height, text, 
+                color='white', 
+                backgroundcolor='black', 
+                verticalalignment='top',
+                horizontalalignment='left', 
+                transform=ax.figure.transFigure,
+                fontsize=20)
+
+    # Data1
+    ax1 = plt.subplot(gs[0])
+    
+    cax1 = ax1.imshow(A1_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
+    ax1.axhline(y=0, color='black', linewidth=2,linestyle='--')
+    ax1.plot(z,A1_center, color='red', linewidth=2,label='center position')
+    ax1.legend(prop={'size': 16},loc='lower right')
+    ax1.set_ylabel("x",fontsize=20)
+    ax1.set_ylim(-10, 10)
+    ax1.set_xticklabels([])  
+    hide_extreme_ytick_labels(ax1)
+    add_title(ax1, title_text = r"$|A1|$")
+    add_colorbar(ax1, cax1)
+    adjust_axis_properties(ax1)
+    add_index(ax1, text="(a)")
+    ax1.tick_params(axis='both', labelsize=20)
+
+
+    # Data2
+    ax2 = plt.subplot(gs[1])
+
+    cax2 = ax2.imshow(A2_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Oranges', alpha=0.5)
+    ax2.axhline(y=0, color='black', linewidth=2,linestyle='--')
+    ax2.plot(z,A2_center, color='red', linewidth=2,label='center position')
+    ax2.legend(prop={'size': 16},loc='lower right')
+    ax2.set_ylabel("x",fontsize=20)
+    ax2.set_ylim(-10, 10)
+    ax2.set_xticklabels([])  # Hide x-axis labels and ticks for A2
+    hide_extreme_ytick_labels(ax2)
+
+    add_title(ax2, title_text = r"$|A2|$")
+    add_colorbar(ax2, cax2)
+    adjust_axis_properties(ax2)
+    add_index(ax2, text="(b)")
+    ax2.tick_params(axis='both', labelsize=20)
+
+    # Data3
+    ax3 = plt.subplot(gs[2])
+
+    cax3 = ax3.imshow(A3_abs,extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
+    ax3.axhline(y=0, color='black', linewidth=2,linestyle='--')
+
+    # Create the mask
+    mask = (z > 15) & (z < 38)
+
+    # Apply the mask
+    z_masked = np.array(z)[mask]
+    A3_center_masked = A3_center[mask]
+
+    # Plot the masked values
+    ax3.plot(z_masked, A3_center_masked, color='red', linewidth=2, label='center position')
+
+
+    ax3.legend(prop={'size': 16},loc='lower right')
+    ax3.set_ylabel("x",fontsize=20)
+    ax3.set_ylim(-10, 10)
+    ax3.set_xlabel("z",fontsize=20)  # Show x-axis labels and ticks only for A3
+    hide_extreme_ytick_labels(ax3)
+    add_title(ax3, title_text = r"$|A3|$")
+    add_colorbar(ax3, cax3)
+    adjust_axis_properties(ax3)
+    add_index(ax3, text="(c)")
+    ax3.tick_params(axis='both', labelsize=20)
+
+    plt.show()
+
+#plot_center_inone(theta2 = 2,E1 = 0.1)
 def plot_A2():
     A1_abs,A2_abs,A3_abs = load()
     # Plot the absolute value of A2 as a function of x and z
@@ -258,30 +473,32 @@ def reflection(theta2 = 2,E1 = 0.2):
 #reflection()
 
 def reflection_alldata_get():
-    theta2_list = np.linspace(1.5, 2.5, 8)
+    E1_list = np.linspace(0.2, 0.6, 20)
 
-    for  theta2_value in theta2_list :
-        save_data(theta2 =  theta2_value, E1 =  0.4)
-    for  theta2_value in theta2_list :
-        save_data(theta2 =  theta2_value, E1 =  0.6)
+    for  E1_value in E1_list :
+        save_data(theta2 =  2.2, E1 = E1_value)
 
 #reflection_alldata_get()
 
 def reflection_alldata_analyze():
-    theta2_list = np.linspace(1.5, 2.5, 8)
+    E1_list = np.linspace(0.2, 0.6, 20)
 
     R1 =  []
     R2 =  []
-    for  theta2_value in theta2_list :
-        R1.append(reflection(theta2 =  theta2_value, E1 =  0.4))
-    for  theta2_value in theta2_list :
-        R2.append(reflection(theta2 =  theta2_value, E1 =  0.6))
-    plt.plot(theta2_list,R1,label='E1 = 0.4')
-    plt.plot(theta2_list,R2,label='E1 = 0.6')
+    for  E1_value in E1_list :
+        R1.append(reflection(theta2 =  2, E1 = E1_value))
+    for  E1_value in E1_list :
+        R2.append(reflection(theta2 =  2.2, E1 =  E1_value))
+    plt.plot(E1_list,R1,label='theta2 =  2')
+    plt.plot(E1_list,R2,label='theta2 =  2.2')
+    print("R1 is ",R1)
+    print("R2 is ",R2)
     plt.legend()
     plt.show()
+    #R1 is  [0.18277668674356337, 0.19174758380417942, 0.20671423158032723, 0.2523866667531735, 0.3691838035643133, 0.5517523955818884, 0.7285780403538605, 0.8463380148268628, 0.9083859755010932, 0.9379067029114851, 0.9522075993899696, 0.9598560837713306, 0.9645478064516619, 0.9678679949487943, 0.9705019858137003, 0.9727415515946822, 0.9747116170054366, 0.9764805663416117, 0.9780852433579119, 0.9795507183193806]
+    #R2 is  [0.09841458240555165, 0.10323026711002797, 0.11021252463169855, 0.14270290173621747, 0.2551534427604946, 0.4622554597761485, 0.680492608982278, 0.8288859319491764, 0.9049272616856316, 0.9392415444728685, 0.955221774019313, 0.9636534185548732, 0.9688024257398383, 0.9724421336746039, 0.9753107872450852, 0.9777163364637609, 0.9797988344542221, 0.9816386118575208, 0.9832809889127018, 0.9847586584994328]
 
-reflection_alldata_analyze()
+#reflection_alldata_analyze()
 
 
 

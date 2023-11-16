@@ -65,7 +65,7 @@ dz = z[1] - z[0]
 
 # Initial conditions
 theta2 = 2
-E1 = 0.4 # 0.2 0.6
+E1 = 0.1 # 0.2 0.6
 E2 = 1e-2 #1e-2
 a1 = 3 #3
 a2 = 1 #1
@@ -279,7 +279,7 @@ def plot_A2():
     plt.title('Absolute value of A2 field')
     plt.show()
     
-#plot_A2()
+plot_A2()
   
 def plot_A2_gamma2():
     # Define gamma2 values to plot
@@ -353,7 +353,7 @@ def plot_all():
     
     plt.show()
 
-#plot_all()
+plot_all()
 
 def save_all():
     # Apply split-step Fourier method
@@ -423,4 +423,4 @@ def reflection():
     R = reflect_power/total_power
     print("reflection is ",R)
 
-reflection()
+#reflection()

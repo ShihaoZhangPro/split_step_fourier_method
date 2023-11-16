@@ -1,131 +1,89 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from mayavi import mlab
 
+# Sample Data
+data1 = np.random.rand(10, 500)
+data2 = np.random.rand(10, 500)
+data3 = np.random.rand(10, 500)
 
-def split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz):
-    dx = x[1] - x[0]
-    k_x = 2 * np.pi * np.fft.fftfreq(len(x), d=dx)
-    
-    A1 = A1_init.copy()
-    A2 = A2_init.copy()
-    A3 = A3_init.copy()
-    
-    A1_results = [A1]
-    A2_results = [A2]
-    A3_results = [A3]
+def plot_data(data1, data2, data3, show_ticks=False):
+    fig = plt.figure(figsize=(15, 9))
 
-    for _ in range(len(z) - 1):
-        # Linear step (Fourier domain)
-        A1_k = np.fft.fft(A1)
-        A2_k = np.fft.fft(A2)
-        A3_k = np.fft.fft(A3)
+    gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0)
 
-        A1_k *= np.exp(1j * D1 * k_x**2 * dz)
-        A2_k *= np.exp(1j * D2 * k_x**2 * dz)
-        A3_k *= np.exp(1j * D3 * k_x**2 * dz)
+    def add_colorbar(ax, cax_data):
+        # Define custom position and size for colorbar
+        left, bottom, width, height = ax.get_position().bounds
+        cax = fig.add_axes([left + width + 0.003, bottom, 0.008, height / 2])
+        fig.colorbar(cax_data, cax=cax)
 
-        A1 = np.fft.ifft(A1_k)
-        A2 = np.fft.ifft(A2_k)
-        A3 = np.fft.ifft(A3_k)
+    def add_title(ax, title_text):
+        # Get the axis position and dimensions
+        left, bottom, width, height = ax.get_position().bounds
+        # Place title text at the right top corner of the axis
+        ax.text(left + width + 0.03, bottom + height, title_text, 
+                ha='right', va='top', transform=fig.transFigure, fontsize=20)
 
-        # Nonlinear step (z-domain update)
-        A1 += -1j * gamma1 * A3 * np.conj(A2) * np.exp(1j * k_hat * dz) * dz
-        A2 += -1j * gamma2 * A3 * np.conj(A1) * np.exp(1j * k_hat * dz) * dz
-        A3 += -1j * gamma3 * A1 * A2 * np.exp(-1j * k_hat * dz) * dz
+    def hide_extreme_ytick_labels(ax):
+        yticks = ax.get_yticklabels()
+        if yticks:
+            yticks[0].set_visible(False)  # Hide smallest label
+            yticks[-1].set_visible(False)  # Hide largest label
+
+    def adjust_axis_properties(ax):
+        # Adjust spines
+        for spine in ax.spines.values():
+            spine.set_linewidth(3)
         
-        A1_results.append(A1.copy())
-        A2_results.append(A2.copy())
-        A3_results.append(A3.copy())
+        # Adjust tick widths
+        ax.xaxis.set_tick_params(width=3)
+        ax.yaxis.set_tick_params(width=3)
 
-    return np.array(A1_results), np.array(A2_results), np.array(A3_results)
-
-# Example parameters
-k1, k2, k3 = 1,2,3
-k_parameter = 100 #100
-k1 = k1*k_parameter
-k1 = k2*k_parameter
-k1 = k3*k_parameter
-
-D1, D2, D3 = 1/k1/2, 1/k2/2, 1/k3/2
-gamma1, gamma2, gamma3 = 10, 10, 10
-
-
-x = np.linspace(-10, 10, 512)
-z = np.linspace(0, 2, 100)
-dz = z[1] - z[0]
-
-# Initial conditions
-theta2 = 0.5
-E1 = 0.4 # 0.2 0.6
-E2 = 1e-2 #1e-2
-a1 = 3 #3
-a2 = 1 #1
-A1_init = E1*np.exp(-x**2/a1**2)
-A2_init = E2*np.exp(-(x - 8)**2/a2**2 + 1j*k2*theta2*x) #x0 = 8
-A3_init = np.exp(-x**2)*0
-
-k_hat = -1*k1*k2*theta2*theta2/2.0/k3
-
-def plot_A1():
-    # Apply split-step Fourier method
-    A1_results, _, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
     
-    # Calculate absolute values of A1 and transpose it
-    A1_abs = np.abs(A1_results).T
-    
-    # Plot the absolute value of A1 as a function of x and z
-    plt.imshow(A1_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
-    plt.xlabel('z')
-    plt.ylabel('x')
-    plt.colorbar(label='|A1|')
-    plt.title('Absolute value of A1 field (rotated 90°)')
+    # Data1
+    ax1 = plt.subplot(gs[0])
+    cax1 = ax1.matshow(data1, cmap='viridis', aspect='auto')
+    hide_extreme_ytick_labels(ax1)
+    adjust_axis_properties(ax1)
+
+    add_title(ax1, title_text = 'A1')
+    add_colorbar(ax1, cax1)
+
+    # Data2
+    ax2 = plt.subplot(gs[1])
+    cax2 = ax2.matshow(data2, cmap='viridis', aspect='auto')
+    ax2.set_title('Data 2', y=1.1)
+    add_colorbar(ax2, cax2)
+
+    # Data3
+    ax3 = plt.subplot(gs[2])
+    cax3 = ax3.matshow(data3, cmap='viridis', aspect='auto')
+    ax3.set_title('Data 3', y=1.1)
+    add_colorbar(ax3, cax3)
+
+    # Option to hide or show ticks
+    if not show_ticks:
+        for ax in [ax1, ax2, ax3]:
+            ax.set_xticks([])
+            ax.set_yticks([])
+
     plt.show()
 
-#plot_A1()
 
-def plot_A2():
-    # Apply split-step Fourier method
-    _, A2_results, _ = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
-    
-    # Calculate absolute values of A2 and transpose it
-    A2_abs = np.abs(A2_results).T
-    
-    # Plot the absolute value of A2 as a function of x and z
-    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='jet')
-    plt.xlabel('z')
-    plt.ylabel('x')
-    plt.colorbar(label='|A2|')
-    plt.title('Absolute value of A2 field (rotated 90°)')
-    plt.show()
-#plot_A2()
+# Create a random dataset
+data = np.random.rand(50, 50, 5000)
 
-def plot_all():
-    # Apply split-step Fourier method
-    A1_results, A2_results, A3_results = split_step_fourier_method_1D(D1, D2, D3, gamma1, gamma2, gamma3, k_hat, A1_init, A2_init, A3_init, x, z, dz)
-    
-    # Calculate absolute values of the fields and transpose them
-    A1_abs = np.abs(A1_results).T
-    A2_abs = np.abs(A2_results).T
-    A3_abs = np.abs(A3_results).T
-    
-    # Plot the absolute value of A1, A2, and A3 as a function of x and z
-    plt.imshow(A1_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Blues', alpha=1)
-    plt.imshow(A2_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Reds', alpha=0.5)
-    plt.imshow(A3_abs, extent=[z.min(), z.max(), x.min(), x.max()], aspect='auto', origin='lower', cmap='Greens', alpha=0.5)
-    
-    plt.xlabel('z')
-    plt.ylabel('x')
-    plt.title('Absolute values of A1 (Blue), A2 (Red), and A3 (Green) fields (rotated 90°)')
-    
-    # Custom legend
-    from matplotlib.patches import Patch
-    legend_elements = [Patch(facecolor='blue', alpha=0.5, label='|A1|'),
-                       Patch(facecolor='red', alpha=0.5, label='|A2|'),
-                       Patch(facecolor='green', alpha=0.5, label='|A3|')]
-    plt.legend(handles=legend_elements)
-    
-    plt.show()
+# Create a volume rendering of the data
+src = mlab.pipeline.scalar_field(data)
+volume = mlab.pipeline.volume(src)
 
-plot_all()
+# Set custom axis limits: x and y from 20 to -20, and z from 0 to 10
+volume.actors.scale = [40/50, 40/50, 10/5000]
+volume.actors.position = [-20, -20, 0]
 
+# Add axes with labels and display values
+axes = mlab.axes(xlabel='X', ylabel='Y', zlabel='Z', nb_labels=5, ranges=[20, -20, 20, -20, 0, 10])
+
+mlab.show()
